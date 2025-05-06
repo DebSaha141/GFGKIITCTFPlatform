@@ -1,0 +1,51 @@
+<!-- Background Video -->
+<video autoplay muted loop id="bgVideo" playsinline>
+    <source src="/videos/backgroundVideo1.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+</video>
+
+<!-- Main Content -->
+<div class="container position-relative z-2">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center text-white">
+            <h1 class="display-4 mb-4">Welcome to GFGKIIT CTF</h1>
+            <p class="lead mb-5">Join us for an exciting Capture The Flag competition!</p>
+
+            <% if (!user) { %>
+                <div class="d-grid gap-3 d-sm-flex justify-content-sm-center">
+                    <a href="/auth/login" class="btn btn-primary btn-lg px-4 gap-3">Login</a>
+                    <a href="/auth/signup" class="btn btn-outline-light btn-lg px-4">Sign Up</a>
+                </div>
+            <% } else { %>
+                <div class="d-grid gap-3 d-sm-flex justify-content-sm-center">
+                    <a href="/dashboard" class="btn btn-primary btn-lg px-4 gap-3">Go to Dashboard</a>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<!-- CSS for Background Video -->
+<style>
+    #bgVideo {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    object-fit: cover;
+}
+
+
+    .z-2 {
+        position: relative;
+        z-index: 2;
+    }
+
+    body {
+        color: white;
+        background-color: black;
+        overflow-x: hidden;
+    }
+</style>

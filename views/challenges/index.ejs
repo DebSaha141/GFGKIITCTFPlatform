@@ -1,0 +1,309 @@
+<div class="container">
+    <h1 class="mb-4">Challenges</h1>
+
+    <% if (ctfStatus !== 'running') { %>
+        <div class="alert alert-warning">
+            CTF is not currently running. Challenges will be available when the CTF starts.
+        </div>
+    <% } else { %>
+        <% categories.forEach(category => { %>
+            <% if (groupedChallenges[category].length > 0) { %>
+                <div class="card mb-4">
+                    <div class="card-header bg-dark">
+                        <h3 class="mb-0 text-light"><%= category %></h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-4">
+                            <% groupedChallenges[category].forEach(challenge => { %>
+                                <div class="col-md-4">
+                                    <div class="card challenge-card h-100 <%= user.solvedChallenges && user.solvedChallenges.includes(challenge._id) ? 'solved' : '' %>">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <h5 class="card-title mb-0">
+                                                    <%= challenge.name %>
+                                                    <% if (user && user.solvedChallenges && user.solvedChallenges.includes(challenge._id)) { %>
+                                                        <i class="bi bi-check-circle-fill text-success ms-2"></i>
+                                                    <% } %>                                                    
+                                                </h5>
+                                                <span class="badge bg-primary"><%= challenge.points %> pts</span>
+                                            </div>
+                                            <div class="progress mb-2" style="height: 5px;">
+                                                <div class="progress-bar" role="progressbar" 
+                                                                style="width: <%= (challenge.solvedBy.length / totalUsers * 100).toFixed(2) %>%">
+                                                </div>
+
+                                            </div>
+                                            <small class="text-muted d-block mb-3">
+                                                <%= challenge.solvedBy.length %> solves
+                                            </small>
+                                            <button class="btn btn-primary w-100" 
+                                                    onclick="showChallengeDetails('<%= challenge._id %>')"
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#challengeModal">
+                                                View Challenge
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    </div>
+                </div>
+            <% } %>
+        <% }); %>
+    <% } %>
+</div>
+
+<!-- Challenge Modal -->
+<div class="modal fade" id="challengeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="challengeTitle"></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="challengeContent">
+                <!-- Content will be loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Messages -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="successToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-success text-white">
+            <strong class="me-auto">Success</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="toastMessage"></div>
+    </div>
+
+    <div id="errorToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-danger text-white">
+            <strong class="me-auto">Error</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="toastMessage"></div>
+    </div>
+</div>
+
+<script>
+function showChallengeDetails(challengeId) {
+    fetch(`/challenges/${challengeId}/details`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('challengeTitle').textContent = data.name;
+            document.getElementById('challengeContent').innerHTML = `
+                <div class="mb-4">
+                    <h6>Category</h6>
+                    <p class="text-muted">${data.category}</p>
+                </div>
+                <div class="mb-4">
+                    <h6>Description</h6>
+                    <p class="text-muted">${data.description}</p>
+                </div>
+                ${data.files && data.files.length > 0 ? `
+                    <div class="mb-4">
+                        <h6>Files</h6>
+                        <ul class="list-unstyled">
+                            ${data.files.map(file => `
+                                <li class="mb-2">
+                                    ${file.link ? 
+                                        `<a href="${file.link}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                            <i class="bi bi-link-45deg me-1"></i>${file.filename}
+                                        </a>` :
+                                        `<a href="/challenges/${challengeId}/files/${file.filename}" class="btn btn-outline-primary btn-sm">
+                                            <i class="bi bi-download me-1"></i>${file.filename}
+                                        </a>`
+                                    }
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                ` : ''}
+                ${data.hints && data.hints.length > 0 ? `
+                    <div class="mb-4">
+                        <h6>Hints</h6>
+                        <div class="list-group">
+                            ${data.hints.map((hint, index) => `
+                                <div class="list-group-item bg-dark text-light border-secondary">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span>Hint ${index + 1}</span>
+                                        ${hint.cost > 0 ? 
+                                            `<span class="badge bg-warning text-dark">${hint.cost} points</span>` : 
+                                            ''}
+                                    </div>
+                                    <button class="btn btn-link btn-sm p-0 mt-2 text-info" 
+                                            onclick="confirmHint('${challengeId}', '${hint._id}', ${hint.cost})">
+                                        Show Hint
+                                    </button>
+                                    <div id="hint-${hint._id}" class="mt-2" style="display: none;"></div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+                <div class="mb-4">
+                    <h6>Submit Flag</h6>
+                    <div id="alertContainer"></div>
+                    <form onsubmit="submitFlag(event, '${challengeId}')" id="flagForm">
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="flag" placeholder="Enter flag" required 
+                                   id="flagInput" ${data.isSolved ? 'disabled' : ''}>
+                            <button type="submit" class="btn btn-primary" id="submitButton" ${data.isSolved ? 'disabled' : ''}>
+                                ${data.isSolved ? 'Solved' : 'Submit'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('danger', 'An error occurred while loading the challenge details.');
+        });
+}
+
+function confirmHint(challengeId, hintId, cost) {
+    const message = cost > 0 
+        ? `This hint will cost you ${cost} points. The hint will only be shown once, so make sure to copy it. Do you want to proceed?`
+        : 'This hint will only be shown once, so make sure to copy it. Do you want to proceed?';
+    
+    if (confirm(message)) {
+        getHint(challengeId, hintId);
+    }
+}
+
+function getHint(challengeId, hintId) {
+    fetch(`/challenges/${challengeId}/hints/${hintId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                showAlert('danger', data.error);
+            } else {
+                const hintElement = document.getElementById(`hint-${hintId}`);
+                hintElement.innerHTML = `
+                    <div class="alert alert-info alert-dismissible fade show">
+                        <strong>Hint:</strong> ${data.hint}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                `;
+                hintElement.style.display = 'block';
+                
+                // Disable the show hint button after showing
+                const showHintButton = hintElement.previousElementSibling;
+                showHintButton.disabled = true;
+                showHintButton.classList.add('text-muted');
+                showHintButton.textContent = 'Hint Shown';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('danger', 'An error occurred while fetching the hint.');
+        });
+}
+
+function showAlert(type, message) {
+    const alertContainer = document.getElementById('alertContainer');
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show`;
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    alertContainer.innerHTML = '';
+    alertContainer.appendChild(alert);
+}
+
+function submitFlag(event, challengeId) {
+    event.preventDefault();
+    const form = event.target;
+    const flagInput = form.flag;
+    const submitButton = form.querySelector('button[type="submit"]');
+
+    // Disable form while submitting
+    flagInput.disabled = true;
+    submitButton.disabled = true;
+
+    fetch(`/challenges/${challengeId}/submit`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest' // Add this to identify AJAX requests
+        },
+        body: JSON.stringify({ flag: flagInput.value })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            showAlert('success', data.message);
+            // Keep form disabled after successful submission
+            flagInput.disabled = true;
+            submitButton.disabled = true;
+            submitButton.textContent = 'Solved';
+            // Reload after a short delay
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showAlert('danger', data.message);
+            // Re-enable form for incorrect submission
+            flagInput.disabled = false;
+            submitButton.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', 'An error occurred while submitting the flag.');
+        // Re-enable form on error
+        flagInput.disabled = false;
+        submitButton.disabled = false;
+    });
+}
+</script>
+
+<style>
+.challenge-card {
+    transition: transform 0.2s;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.challenge-card:hover {
+    transform: translateY(-5px);
+}
+
+.challenge-card.solved {
+    border-color: #198754;
+}
+
+.challenge-card.solved .card-title {
+    color: #198754;
+}
+
+.modal-content {
+    background-color: #1a1a1a;
+    color: #fff;
+}
+
+.modal-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.list-group-item {
+    background-color: #2a2a2a;
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.alert {
+    margin-bottom: 1rem;
+}
+</style> 

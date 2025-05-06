@@ -1,0 +1,100 @@
+<div class="container">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h1 class="card-title mb-0"><%= challenge.name %></h1>
+                        <span class="badge bg-primary"><%= challenge.points %> points</span>
+                    </div>
+
+                    <div class="mb-4">
+                        <h5>Category</h5>
+                        <p class="text-muted"><%= challenge.category %></p>
+                    </div>
+
+                    <div class="mb-4">
+                        <h5>Description</h5>
+                        <p class="text-muted"><%= challenge.description %></p>
+                    </div>
+
+                    <% if (challenge.files && challenge.files.length > 0) { %>
+                        <div class="mb-4">
+                            <h5>Files</h5>
+                            <ul class="list-unstyled">
+                                <% challenge.files.forEach(file => { %>
+                                    <li>
+                                        <a href="/challenges/<%= challenge._id %>/files/<%= file.filename %>" class="btn btn-outline-primary btn-sm">
+                                            <i class="bi bi-download me-1"></i>
+                                            <%= file.filename %>
+                                        </a>
+                                    </li>
+                                <% }); %>
+                            </ul>
+                        </div>
+                    <% } %>
+
+                    <% if (challenge.hints && challenge.hints.length > 0) { %>
+                        <div class="mb-4">
+                            <h5>Hints</h5>
+                            <div class="list-group">
+                                <% challenge.hints.forEach(hint => { %>
+                                    <div class="list-group-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span>Hint <%= challenge.hints.indexOf(hint) + 1 %></span>
+                                            <% if (hint.cost > 0) { %>
+                                                <span class="badge bg-warning text-dark"><%= hint.cost %> points</span>
+                                            <% } %>
+                                        </div>
+                                        <button class="btn btn-link btn-sm p-0 mt-2" 
+                                                onclick="getHint('<%= challenge._id %>', '<%= hint._id %>')">
+                                            Show Hint
+                                        </button>
+                                        <div id="hint-<%= hint._id %>" class="mt-2" style="display: none;"></div>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        </div>
+                    <% } %>
+
+                    <div class="mb-4">
+                        <h5>Submit Flag</h5>
+                        <form action="/challenges/<%= challenge._id %>/submit" method="POST">
+                            <div class="input-group">
+                                <input type="text" class="form-control" name="flag" placeholder="Enter flag" required>
+                                <button type="submit" class="btn btn-primary">Submit</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="text-center">
+                        <a href="/challenges" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-1"></i>
+                            Back to Challenges
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function getHint(challengeId, hintId) {
+    fetch(`/challenges/${challengeId}/hints/${hintId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+            } else {
+                const hintElement = document.getElementById(`hint-${hintId}`);
+                hintElement.textContent = data.hint;
+                hintElement.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while fetching the hint.');
+        });
+}
+</script> 

@@ -1,0 +1,413 @@
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2 class="text-light">Admin Dashboard</h2>
+        </div>
+        <div class="col-md-6 text-end">
+            <div class="btn-group">
+                <form action="/admin/ctf/<%= ctfStatus === 'running' ? 'stop' : 'start' %>" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-<%= ctfStatus === 'running' ? 'danger' : 'success' %>">
+                        <i class="bi bi-<%= ctfStatus === 'running' ? 'stop' : 'play' %>-fill me-1"></i>
+                        <%= ctfStatus === 'running' ? 'Stop CTF' : 'Start CTF' %>
+                    </button>
+                </form>
+                <form action="/admin/ctf/reset" method="POST" class="d-inline ms-2" onsubmit="return confirm('Are you sure you want to reset everything? This will clear all scores and submissions.')">
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i>
+                        Reset CTF
+                    </button>
+                </form>
+                <a href="/admin/logout" class="btn btn-outline-light ms-2">
+                    <i class="bi bi-box-arrow-right me-1"></i>
+                    Logout
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-4 bg-dark border-secondary">
+                <div class="card-header bg-dark-rgb text-light">
+                    <h3 class="card-title mb-0">Add Challenge</h3>
+                </div>
+                <div class="card-body">
+                    <form action="/admin/challenges/add" method="POST">
+                        <div class="mb-3">
+                            <label for="name" class="form-label text-light">Name</label>
+                            <input type="text" class="form-control bg-dark text-light border-secondary" id="name" name="name" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label text-light">Description</label>
+                            <textarea class="form-control bg-dark text-light border-secondary" id="description" name="description" rows="3" required></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="points" class="form-label text-light">Points</label>
+                            <input type="number" class="form-control bg-dark text-light border-secondary" id="points" name="points" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="category" class="form-label text-light">Category</label>
+                            <select class="form-control bg-dark text-light border-secondary" id="category" name="category" required>
+                                <option value="">Select Category</option>
+                                <option value="General Skills">General Skills</option>
+                                <option value="OSINT">OSINT</option>
+                                <option value="Web Exploitation">Web Exploitation</option>
+                                <option value="Reverse Engineering">Reverse Engineering</option>
+                                <option value="Forensics">Forensics</option>
+                                <option value="Cryptography">Cryptography</option>
+                                <option value="Others">Others</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="flag" class="form-label text-light">Flag</label>
+                            <input type="text" class="form-control bg-dark text-light border-secondary" id="flag" name="flag" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-light">Files</label>
+                            <div id="fileInputs">
+                                <div class="input-group mb-2">
+                                    <input type="text" class="form-control bg-dark text-light border-secondary" name="files[0][filename]" placeholder="File name">
+                                    <input type="text" class="form-control bg-dark text-light border-secondary" name="files[0][link]" placeholder="File link or URL">
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addFileInput()">
+                                <i class="bi bi-plus-circle me-1"></i>
+                                Add Another File
+                            </button>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-light">Hints</label>
+                            <div id="hintInputs">
+                                <div class="input-group mb-2">
+                                    <input type="text" class="form-control bg-dark text-light border-secondary" name="hints[0][text]" placeholder="Hint text">
+                                    <input type="number" class="form-control bg-dark text-light border-secondary" name="hints[0][cost]" placeholder="Cost" value="0">
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addHintInput()">
+                                <i class="bi bi-plus-circle me-1"></i>
+                                Add Another Hint
+                            </button>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-plus-circle me-1"></i>
+                                Add Challenge
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card mb-4 bg-dark border-secondary">
+                <div class="card-header bg-dark-rgb text-light">
+                    <h3 class="card-title mb-0">Challenges</h3>
+                </div>
+                <div class="card-body">
+                    <% if (challenges && challenges.length > 0) { %>
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Category</th>
+                                        <th>Points</th>
+                                        <th>Solves</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% challenges.forEach(challenge => { %>
+                                        <tr>
+                                            <td><%= challenge.name %></td>
+                                            <td><%= challenge.category %></td>
+                                            <td><%= challenge.points %></td>
+                                            <td><%= challenge.solvedBy.length %></td>
+                                            <td>
+                                                <button class="btn btn-primary btn-sm" 
+                                                        onclick="editChallenge('<%= challenge._id %>')"
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#editChallengeModal">
+                                                    <i class="bi bi-pencil me-1"></i>
+                                                    Edit
+                                                </button>
+                                                <form action="/admin/challenges/remove/<%= challenge._id %>" method="POST" class="d-inline">
+                                                    <button type="submit" class="btn btn-danger btn-sm" 
+                                                            onclick="return confirm('Are you sure you want to remove this challenge?')">
+                                                        <i class="bi bi-trash me-1"></i>
+                                                        Remove
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                </tbody>
+                            </table>
+                        </div>
+                    <% } else { %>
+                        <p class="text-muted">No challenges available.</p>
+                    <% } %>
+                </div>
+            </div>
+
+            <div class="card bg-dark border-secondary">
+                <div class="card-header bg-dark-rgb text-light">
+                    <h3 class="card-title mb-0">Recent Activities</h3>
+                </div>
+                <div class="card-body">
+                    <% if (activities && activities.length > 0) { %>
+                        <div class="list-group">
+                            <% activities.forEach(activity => { %>
+                                <div class="list-group-item bg-dark text-light border-secondary">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong class="text-primary"><%= activity.user.username %></strong>
+                                            <span class="<%= activity.isCorrect ? 'text-success' : 'text-danger' %>">
+                                                <%= activity.isCorrect ? 'solved' : 'attempted' %>
+                                            </span>
+                                            <strong class="text-info"><%= activity.challenge.name %></strong>
+                                        </div>
+                                        <small class="text-muted">
+                                            <%= new Date(activity.submittedAt).toLocaleString() %>
+                                        </small>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    <% } else { %>
+                        <p class="text-muted">No recent activities.</p>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Challenge Modal -->
+<div class="modal fade" id="editChallengeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title">Edit Challenge</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editChallengeForm" method="POST">
+                    <div class="mb-3">
+                        <label for="editName" class="form-label">Name</label>
+                        <input type="text" class="form-control bg-dark text-light border-secondary" id="editName" name="name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editDescription" class="form-label">Description</label>
+                        <textarea class="form-control bg-dark text-light border-secondary" id="editDescription" name="description" rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editPoints" class="form-label">Points</label>
+                        <input type="number" class="form-control bg-dark text-light border-secondary" id="editPoints" name="points" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editCategory" class="form-label">Category</label>
+                        <select class="form-control bg-dark text-light border-secondary" id="editCategory" name="category" required>
+                            <option value="General Skills">General Skills</option>
+                            <option value="OSINT">OSINT</option>
+                            <option value="Web Exploitation">Web Exploitation</option>
+                            <option value="Reverse Engineering">Reverse Engineering</option>
+                            <option value="Forensics">Forensics</option>
+                            <option value="Cryptography">Cryptography</option>
+                            <option value="Others">Others</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editFlag" class="form-label">Flag</label>
+                        <input type="text" class="form-control bg-dark text-light border-secondary" id="editFlag" name="flag" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Files</label>
+                        <div id="editFileInputs"></div>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addEditFileInput()">
+                            <i class="bi bi-plus-circle me-1"></i>
+                            Add Another File
+                        </button>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Hints</label>
+                        <div id="editHintInputs"></div>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addEditHintInput()">
+                            <i class="bi bi-plus-circle me-1"></i>
+                            Add Another Hint
+                        </button>
+                    </div>
+
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let fileInputCount = 1;
+let hintInputCount = 1;
+
+function addFileInput() {
+    const container = document.getElementById('fileInputs');
+    const div = document.createElement('div');
+    div.className = 'input-group mb-2';
+    div.innerHTML = `
+        <input type="text" class="form-control bg-dark text-light border-secondary" name="files[${fileInputCount}][filename]" placeholder="File name">
+        <input type="text" class="form-control bg-dark text-light border-secondary" name="files[${fileInputCount}][link]" placeholder="File link or URL">
+    `;
+    container.appendChild(div);
+    fileInputCount++;
+}
+
+function addHintInput() {
+    const container = document.getElementById('hintInputs');
+    const div = document.createElement('div');
+    div.className = 'input-group mb-2';
+    div.innerHTML = `
+        <input type="text" class="form-control bg-dark text-light border-secondary" name="hints[${hintInputCount}][text]" placeholder="Hint text">
+        <input type="number" class="form-control bg-dark text-light border-secondary" name="hints[${hintInputCount}][cost]" placeholder="Cost" value="0">
+    `;
+    container.appendChild(div);
+    hintInputCount++;
+}
+
+function editChallenge(challengeId) {
+    fetch(`/admin/challenges/${challengeId}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('editChallengeForm').action = `/admin/challenges/${challengeId}/edit`;
+            document.getElementById('editName').value = data.name;
+            document.getElementById('editDescription').value = data.description;
+            document.getElementById('editPoints').value = data.points;
+            document.getElementById('editCategory').value = data.category;
+            document.getElementById('editFlag').value = data.flag;
+
+            // Clear and populate files
+            const fileInputs = document.getElementById('editFileInputs');
+            fileInputs.innerHTML = '';
+            data.files.forEach((file, index) => {
+                const div = document.createElement('div');
+                div.className = 'input-group mb-2';
+                div.innerHTML = `
+                    <input type="text" class="form-control bg-dark text-light border-secondary" name="files[${index}][filename]" value="${file.filename}" placeholder="File name">
+                    <input type="text" class="form-control bg-dark text-light border-secondary" name="files[${index}][link]" value="${file.link || ''}" placeholder="File link or URL">
+                `;
+                fileInputs.appendChild(div);
+            });
+
+            // Clear and populate hints
+            const hintInputs = document.getElementById('editHintInputs');
+            hintInputs.innerHTML = '';
+            data.hints.forEach((hint, index) => {
+                const div = document.createElement('div');
+                div.className = 'input-group mb-2';
+                div.innerHTML = `
+                    <input type="text" class="form-control bg-dark text-light border-secondary" name="hints[${index}][text]" value="${hint.text}" placeholder="Hint text">
+                    <input type="number" class="form-control bg-dark text-light border-secondary" name="hints[${index}][cost]" value="${hint.cost}" placeholder="Cost">
+                `;
+                hintInputs.appendChild(div);
+            });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while loading the challenge details.');
+        });
+}
+
+function addEditFileInput() {
+    const container = document.getElementById('editFileInputs');
+    const index = container.children.length;
+    const div = document.createElement('div');
+    div.className = 'input-group mb-2';
+    div.innerHTML = `
+        <input type="text" class="form-control bg-dark text-light border-secondary" name="files[${index}][filename]" placeholder="File name">
+        <input type="text" class="form-control bg-dark text-light border-secondary" name="files[${index}][link]" placeholder="File link or URL">
+    `;
+    container.appendChild(div);
+}
+
+function addEditHintInput() {
+    const container = document.getElementById('editHintInputs');
+    const index = container.children.length;
+    const div = document.createElement('div');
+    div.className = 'input-group mb-2';
+    div.innerHTML = `
+        <input type="text" class="form-control bg-dark text-light border-secondary" name="hints[${index}][text]" placeholder="Hint text">
+        <input type="number" class="form-control bg-dark text-light border-secondary" name="hints[${index}][cost]" placeholder="Cost" value="0">
+    `;
+    container.appendChild(div);
+}
+</script>
+
+<style>
+.modal-content {
+    background-color: #1a1a1a !important;
+    color: #fff !important;
+}
+
+.modal-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.modal-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.list-group-item {
+    background-color: #2a2a2a !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #fff !important;
+}
+
+select.form-control {
+    background-color: #1a1a1a !important;
+    color: #fff !important;
+}
+
+select.form-control option {
+    background-color: #1a1a1a;
+    color: #fff;
+}
+
+.table {
+    color: #fff !important;
+}
+
+.table-dark {
+    background-color: #1a1a1a !important;
+}
+
+.table-dark td, .table-dark th {
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.form-control:focus {
+    background-color: #2a2a2a !important;
+    color: #fff !important;
+    border-color: #0d6efd !important;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+}
+
+.btn-close-white {
+    filter: invert(1) grayscale(100%) brightness(200%) !important;
+}
+</style> 

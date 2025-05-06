@@ -1,0 +1,106 @@
+<div class="container">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card challenge-details">
+                <div class="card-body">
+                    <h1 class="card-title mb-4">
+                        <%= challenge.title %>
+                        <% if (user.solvedChallenges.includes(challenge._id)) { %>
+                            <i class="bi bi-check-circle-fill text-success"></i>
+                        <% } %>
+                    </h1>
+                    
+                    <div class="mb-4">
+                        <span class="badge bg-primary me-2">
+                            <i class="bi bi-star-fill me-1"></i>
+                            <%= challenge.points %> points
+                        </span>
+                        <span class="badge bg-secondary">
+                            <i class="bi bi-people-fill me-1"></i>
+                            <%= challenge.solvedBy.length %> solves
+                        </span>
+                    </div>
+                    
+                    <div class="challenge-description mb-4">
+                        <h4>Description</h4>
+                        <p><%= challenge.description %></p>
+                    </div>
+                    
+                    <% if (challenge.files && challenge.files.length > 0) { %>
+                        <div class="challenge-files mb-4">
+                            <h4>Files</h4>
+                            <div class="list-group">
+                                <% challenge.files.forEach(file => { %>
+                                    <a href="/challenges/<%= challenge._id %>/files/<%= file.filename %>" 
+                                       class="list-group-item list-group-item-action file-download">
+                                        <i class="bi bi-download me-2"></i>
+                                        <%= file.filename %>
+                                    </a>
+                                <% }); %>
+                            </div>
+                        </div>
+                    <% } %>
+                    
+                    <% if (challenge.hints && challenge.hints.length > 0) { %>
+                        <div class="challenge-hints mb-4">
+                            <h4>Hints</h4>
+                            <% challenge.hints.forEach((hint, index) => { %>
+                                <div class="hint-item">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h5 class="mb-0">Hint <%= index + 1 %></h5>
+                                        <button class="btn btn-sm btn-outline-primary hint-button"
+                                                data-hint-id="<%= hint._id %>"
+                                                data-challenge-id="<%= challenge._id %>">
+                                            <i class="bi bi-eye"></i> Reveal Hint
+                                        </button>
+                                    </div>
+                                    <p id="hint-<%= hint._id %>" class="mb-0">
+                                        <% if (hint.cost > 0) { %>
+                                            Cost: <%= hint.cost %> points
+                                        <% } else { %>
+                                            Click to reveal
+                                        <% } %>
+                                    </p>
+                                </div>
+                            <% }); %>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title mb-4">Submit Flag</h4>
+                    
+                    <form id="submitFlagForm" data-challenge-id="<%= challenge._id %>">
+                        <div class="mb-3">
+                            <input type="text" class="form-control" name="flag" 
+                                   placeholder="Enter flag" required>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                Submit Flag
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="mt-4">
+                        <h5>Challenge Statistics</h5>
+                        <div class="progress mb-2">
+                            <div class="progress-bar" role="progressbar" 
+                                 style="width: <%= (challenge.solvedBy.length / totalUsers * 100) %>%">
+                                <%= Math.round(challenge.solvedBy.length / totalUsers * 100) %>%
+                            </div>
+                        </div>
+                        <small class="text-muted">
+                            <%= challenge.solvedBy.length %> out of <%= totalUsers %> users solved this challenge
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 
