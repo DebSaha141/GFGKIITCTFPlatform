@@ -14,7 +14,9 @@ const app = express();
 global.ctfStatus = 'stopped';
 
 // Database connection
-mongoose.connect(process.env.MONGODB_URI)
+mongoose.connect(process.env.MONGODB_URI,{ useNewUrlParser: true,
+  useUnifiedTopology: true,
+  ssl: true})
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
@@ -31,7 +33,7 @@ app.set('layout', 'layouts/main');
 
 // Session configuration
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'your-secret-key',
+    secret: process.env.SESSION_SECRET || 'gfgctfisbest',
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({ 
