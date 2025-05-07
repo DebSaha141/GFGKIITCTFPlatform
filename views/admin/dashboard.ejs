@@ -173,7 +173,9 @@
                                             <span class="<%= activity.isCorrect ? 'text-success' : 'text-danger' %>">
                                                 <%= activity.isCorrect ? 'solved' : 'attempted' %>
                                             </span>
-                                            <strong class="text-info"><%= activity.challenge.name %></strong>
+                                            <strong class="text-info">
+                                                <%= activity.challenge?.name || 'Deleted Challenge' %>
+                                              </strong>
                                         </div>
                                         <small class="text-muted">
                                             <%= new Date(activity.submittedAt).toLocaleString() %>
