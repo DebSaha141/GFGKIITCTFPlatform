@@ -37,6 +37,7 @@ router.get('/', isAuthenticated, async (req, res) => {
 
         // Calculate rank
         const totalUsers = await User.countDocuments();
+        console.log('Total users:', totalUsers);
         const usersWithHigherPoints = await User.countDocuments({
             points: { $gt: user.points }
         });

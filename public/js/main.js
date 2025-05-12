@@ -1,16 +1,16 @@
-// Utility function to show loading spinner
+
 function showLoading(element) {
     element.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
     element.disabled = true;
 }
 
-// Utility function to hide loading spinner
+
 function hideLoading(element, originalText) {
     element.innerHTML = originalText;
     element.disabled = false;
 }
 
-// Utility function to show alert
+
 function showAlert(message, type = 'success') {
     const alertDiv = document.createElement('div');
     alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
@@ -20,13 +20,12 @@ function showAlert(message, type = 'success') {
     `;
     document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.container').firstChild);
     
-    // Auto dismiss after 5 seconds
+
     setTimeout(() => {
         alertDiv.remove();
     }, 5000);
 }
 
-// Handle challenge submission
 document.addEventListener('DOMContentLoaded', () => {
     const submitForm = document.getElementById('submitFlagForm');
     if (submitForm) {
@@ -51,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (response.ok) {
                     showAlert(data.message, 'success');
                     if (data.correct) {
-                        // Update UI to show solved status
+              
                         const challengeCard = document.querySelector(`[data-challenge-id="${challengeId}"]`);
                         if (challengeCard) {
                             challengeCard.classList.add('solved');
@@ -68,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Handle challenge card clicks
+    
     const challengeCards = document.querySelectorAll('.challenge-card');
     challengeCards.forEach(card => {
         card.addEventListener('click', () => {
@@ -77,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Handle hint requests
+   
     const hintButtons = document.querySelectorAll('.hint-button');
     hintButtons.forEach(button => {
         button.addEventListener('click', async (e) => {

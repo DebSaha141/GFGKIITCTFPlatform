@@ -78,6 +78,9 @@ router.get('/', isAuthenticated, async (req, res) => {
 
         // console.log(usersWithLastSolved[0].lastSolved);
 
+
+        // console.log(usersWithLastSolved);
+
         res.render('leaderboard', {
             user: req.user,
             users: usersWithLastSolved,
